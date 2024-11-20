@@ -1,0 +1,164 @@
+START:
+  STOP Watchdog Timer
+  Unlock GPIO Pins
+
+  Configure P1.1 as Output for LED Tasks
+
+  Configure P8.1 to P8.3 and P3.0 to P3.7 as Output for LCD Tasks
+  Initialize LCD in 8-bit mode with cursor blinking and clear display
+
+  Move the LCD to the Second Line
+  Display "Brighton" on the LCD
+
+  Configure P4.1, P4.2, and P5.1 for Joystick as Input with pull-up resistors
+  Configure ADC for joystick inputs with multi-sequence sampling and 12-bit resolution
+
+  Configure P1.2, P1.3 for motor PWM and P4.7 for motor enable
+  Configure Timer A1 for motor control with PWM output
+
+  Configure P1.0 for servo PWM output to control servo motor
+  Configure Timer A0 for servo control with PWM output
+
+  Configure P6.0, P6.1, and P5.3 for Button Input with pull-up resistors
+
+  Configure P7.0 as Output for Buzzer Tasks
+
+  Enable Global Interrupts
+
+  Configure UART with Baud Rate 9600 8N1
+
+  LOOP FOREVER:
+    Y_NADC                   = JOYSTICK_GET_Y_AXIS_NADC()
+    System_B_Data.NADC_Y_OUT = Y_NADC
+    DC_MOTOR_SPEED           = JOYSTICK_MAP_NADC_TO_DC_MOTOR_SPEED(Y_NADC)
+    DC_MOTOR_SET_SPEED(DC_MOTOR_SPEED)
+
+    X_NADC                   = JOYSTICK_GET_X_AXIS_NADC()
+    System_B_Data.NADC_X_OUT = X_NADC
+    SERVO_MOTOR_ANGLE        = JOYSTICK_MAP_NADC_TO_SERVO_MOTOR_ANGLE(X_NADC)
+    SERVO_MOTOR_SET_ANGLE(SERVO_MOTOR_ANGLE)
+
+    IF Countdown.Countdown_State == Finished:
+      Toggle Green LED
+    END IF
+
+    IF Joystick Button is Pressed:
+      Clear LCD Screen
+      Move the LCD to the Second Line
+      Display "Ready" on the LCD Screen
+
+      Initiaize the Countdown Struct to Hold 1 Min and 15 Seconds
+      Configure Timer B0 for 1 second continuous mode
+      Enable Timer B0 Interrupt on overflow
+    END IF
+
+    IF Button A is Not Pressed:
+      System_B_Data.Button_State = False
+    ELSE:
+      System_B_Data.Button_State = True
+
+      IF Countdown.Countdown_State == Paused:
+        Countdown.Countdown_State = Running
+      ELSE IF Countdown.Countdown_State == Ready:
+        Countdown.Countdown_State = Running
+      END IF
+
+      Clear LCD Screen
+      Move the LCD to the Second Line
+      Display "Counting" on the LCD Screen
+    END IF
+
+
+    IF Button B is Pressed:
+      Countdown.Countdown_State = Paused
+
+      Clear LCD Screen
+      Move the LCD to the Second Line
+      Display "Paused" on the LCD Screen
+    END IF
+
+    IF Button C is Pressed:
+      Set Countdown.Countdown_State to be masked with IN_SONG
+
+      Clear LCD Screen
+      Move the LCD to the First Line
+      Display "Do Re Mi" on the LCD Screen
+
+      Move the LCD to the Second Line
+      Display "Song" on the LCD Screen
+
+      PLAY_NOTE(C4, 200)
+      PLAY_NOTE(D4, 200)
+      PLAY_NOTE(E4, 200)
+      PLAY_NOTE(F4, 200)
+      PLAY_NOTE(G4, 200)
+      PLAY_NOTE(F4, 200)
+      PLAY_NOTE(E4, 200)
+      PLAY_NOTE(D4, 200)
+      PLAY_NOTE(C4, 200)
+
+      Remove Countdown.Countdown_State maske with IN_SONG
+      Move the LCD to the Second Line
+      
+      SWITCH on Countdown.Countdown_State:
+      CASE Paused:
+        Display "Paused" on the LCD Screen
+        Break
+      CASE Ready:
+        Display "Ready" on the LCD Screen
+        Break
+      CASE Finished:
+        Display "Time" on the LCD Screen
+      CASE RUNNING:
+        Display "Counting"  on the LCD Screen
+      DEFAULT:
+        Break
+      END SWITCH
+    END IF
+
+    Formatted_String = FORMAT_SYSTEM_B_DATA_FOR_UART()
+    Send over UART Formatted_String
+
+    Delay 10ms
+
+  END LOOP
+
+END START
+
+FUNCTION FOR PLAY_NOTE:
+  INPUTS: Note, Duration_MS
+  Elapsed_MS = 0
+
+  Set Timer A2's period for the note, Clock in Up Mode, and Clear the timer
+
+  WHILE Elapsed_MS < Duration_MS:
+    IF Timer A2 is Finsihed:
+      Toggle the Buzzer
+      Clear the interrupt flag on Timer A2
+      Increaed the Elapsed Time
+    END IF
+  END WHILE
+
+  Stop the Buzzer
+  Stop the Timer
+END FUNCTION
+
+INTERRUPT FOR TIMER0_B0:
+  If Countdown is Finished:
+    Clear LCD Screen
+    Move the LCD to the Second Line
+    Display "Time" on the LCD Screen
+
+    Countdown.Countdown_Statate = Finished
+  ELSE
+    IF Countdown is not in a Song:
+      Move the LCD to the First Line
+      Display the Remaning Time on the LCD Screen
+    END IF
+
+    IF Countdown is Running:
+      Decrement the Counter
+    END IF
+  END IF
+END INTERRUPT
+

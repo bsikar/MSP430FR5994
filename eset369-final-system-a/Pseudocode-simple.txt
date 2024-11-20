@@ -1,0 +1,39 @@
+START:
+  STOP Watchdog Timer
+  Unlock GPIO Pins
+
+  Configure_Green_LED()
+
+  Configure_LCD_GPIO()
+  Configure_LCD()
+
+  Move the LCD to the Second Line
+  Display "Brighton" on the LCD
+
+  Configure_DC_Motor()
+  Configure_Servo_Motor()
+
+  Configure_Buttons()
+
+  Configure_Buzzer()
+
+  Enable Global Interrupts
+
+  Configure_UART()
+
+  LOOP FOREVER:
+    DC_Motor_Set_Speed(Joystick_Map_to_Speed(Joystick_get_Y_Axis()))
+    Servo_Motor_Set_Angle(Joystick_Map_to_Degree(Joystick_get_X_Axis()))
+    Handle_LED()
+    Handle_Joystick_Button()
+    Handle_Button_A()
+    Handle_Button_B()
+    Handle_Button_C()
+
+    UART_Send_System_B()
+
+    Delay 10ms
+
+  END LOOP
+
+END START

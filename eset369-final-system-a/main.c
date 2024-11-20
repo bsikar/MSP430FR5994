@@ -13,7 +13,8 @@
 #include "buzzer.h"
 #include "uart.h"
 
-int main(void) {
+int main(void)
+{
   WDTCTL   = WDTPW | WDTHOLD; /* Stop watchdog timer */
   PM5CTL0 &= ~LOCKLPM5;       /* Unlock GPIO pins */
 

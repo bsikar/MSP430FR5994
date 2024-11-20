@@ -33,7 +33,7 @@ void uart_send_str(const char *data)
 {
   while (*data) {
     while (!(UCA0IFG & UCTXIFG)); /* Wait for TX buffer to be ready */
-    UCA0TXBUF = *data++;          /* Transmit next character */
+    UCA0TXBUF = *(data++);        /* Transmit next character */
   }
 }
 

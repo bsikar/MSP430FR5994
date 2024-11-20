@@ -38,7 +38,7 @@ void lcd_write(char ch)
 void lcd_write_s(const char *str)
 {
    while (*str) {
-    lcd_write(*str++);
+    lcd_write(*(str++));
   }
 }
 
